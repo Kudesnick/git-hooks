@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# this hook deleted feature branch and pushed tag with equivalent name.
+# used to delete hanging branches in the archive
+
+read local_ref local_sha remote_ref remote_sha
+
+is_detruct='delete'
+
+if [[ $local_ref =~ 'delete' ]] && [[ $remote_ref =~ 'refs/heads/feature' ]]; then
+  branch_name=$(echo "$remote_ref" | cut -c12-255)
+  tag_name="archive/$(echo "$branch_name" | tr '/' '_')"
+
+  echo "local_ref=$local_ref, local_sha=$local_sha, remote_ref=$remote_ref, remote_sha=$remote_sha"
+  echo "branch_name=$branch_name, tag_name=$tag_name"
+
+  git tag $tag_name $remote_sha && git push origin $tag_name
+
+  if [[$? == 0]]; then
+    git branch -d $branch_name
+  else
+    exit 1
+  fi
+  exit 0
+fi
+
+exit 0
